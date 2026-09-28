@@ -44,7 +44,24 @@ Bob flagged that the API key was hardcoded in the source file and immediately re
 ### 5. Debugging
 When the external IBM Bob inference API endpoint returned connection errors, Bob systematically diagnosed the issue (wrong hostname, wrong API format) and pivoted to a working mock implementation so the demo could still run — all within the hackathon time constraint.
 
-### 6. Documentation
+### 6. Commit Messages
+Bob generated every git commit message in this project. Instead of writing vague messages under time pressure, I typed in the Bob chat panel:
+
+```
+commit my changes with a good message
+```
+
+Bob analysed the git diff, understood what changed, and produced conventional commit messages like:
+
+```
+feat: add insurance claims triage assistant with fraud detection and risk meter
+fix: move BOB_API_KEY to environment variable via .env loader
+docs: add README with project description and real-world feasibility
+```
+
+This kept the git history clean and meaningful throughout the entire hackathon.
+
+### 7. Documentation
 This README was written by Bob based on a plain-English prompt asking for project description, development process, and real-world feasibility.
 
 ---
