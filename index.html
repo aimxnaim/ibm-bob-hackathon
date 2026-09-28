@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClaimsTriage — Insurance Claims Triage Assistant</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --critical: #dc2626;
+      --critical-bg: #fef2f2;
+      --high: #ea580c;
+      --high-bg: #fff7ed;
+      --medium: #d97706;
+      --medium-bg: #fffbeb;
+      --low: #16a34a;
+      --low-bg: #f0fdf4;
+      --none: #16a34a;
+      --fraud-high: #dc2626;
+      --fraud-medium: #ea580c;
+      --fraud-low: #d97706;
+      --fraud-none: #16a34a;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-icon svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    header h1 { font-size: 17px; font-weight: 600; color: var(--text); }
+    header span { font-size: 13px; color: var(--muted); margin-left: 4px; }
+
+    .powered-by {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .powered-by strong { color: var(--accent); }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .hero h2 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus { border-color: var(--accent); background: #fff; }
+    textarea::placeholder { color: var(--muted); }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover { background: var(--border); }
+
+    .sample-btns {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .sample-btn {
+      font-size: 12px;
+      padding: 6px 12px;
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .sample-btn:hover { background: #dbeafe; }
+
+    /* Spinner */
+    .spinner-wrap {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 24px;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .spinner-wrap.active { display: flex; }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Results */
+    #results { display: none; }
+    #results.visible { display: block; }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .priority-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 5px 14px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-CRITICAL { background: var(--critical-bg); color: var(--critical); }
+    .badge-HIGH     { background: var(--high-bg);     color: var(--high); }
+    .badge-MEDIUM   { background: var(--medium-bg);   color: var(--medium); }
+    .badge-LOW      { background: var(--low-bg);      color: var(--low); }
+
+    .escalate-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .escalate-yes { background: #fef2f2; color: #dc2626; }
+    .escalate-no  { background: #f0fdf4; color: #16a34a; }
+
+    .summary-text {
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.6;
+      padding: 14px 16px;
+      background: var(--accent-light);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 20px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .info-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+
+    .info-block-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .info-block-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .fraud-HIGH    { color: var(--fraud-high); }
+    .fraud-MEDIUM  { color: var(--fraud-medium); }
+    .fraud-LOW     { color: var(--fraud-low); }
+    .fraud-NONE    { color: var(--fraud-none); }
+
+    .complexity-SIMPLE   { color: #16a34a; }
+    .complexity-MODERATE { color: #d97706; }
+    .complexity-COMPLEX  { color: #dc2626; }
+
+    .actions-list {
+      list-style: none;
+    }
+
+    .actions-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .actions-list li:last-child { border-bottom: none; }
+
+    .action-num {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    .fraud-list {
+      list-style: none;
+    }
+
+    .fraud-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .fraud-dot {
+      width: 8px; height: 8px;
+      background: var(--critical);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    .no-fraud {
+      font-size: 14px;
+      color: var(--low);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .escalation-box {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--critical);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .escalation-icon { flex-shrink: 0; margin-top: 1px; }
+
+    .error-box {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 16px;
+      color: var(--critical);
+      font-size: 14px;
+      display: none;
+    }
+
+    .error-box.visible { display: block; }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">
+    <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+  </div>
+  <h1>ClaimsTriage</h1>
+  <span>Insurance Claims Assistant</span>
+  <div class="powered-by">Powered by <strong>IBM Bob AI</strong></div>
+</header>
+
+<main>
+  <div class="hero">
+    <h2>AI-Powered Claims Triage</h2>
+    <p>Enter a claim summary below. Bob AI will assess priority, detect fraud indicators, and recommend next actions instantly.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Claim Submission</div>
+    <label for="claim-input">Claim Summary</label>
+    <textarea
+      id="claim-input"
+      placeholder="Describe the insurance claim in detail. Include policy type, incident description, claimant information, dates, amounts, and any relevant context..."
+    ></textarea>
+
+    <p style="font-size:12px; color:var(--muted); margin-top:8px;">Try a sample scenario:</p>
+    <div class="sample-btns">
+      <button class="sample-btn" onclick="loadSample('routine')">Routine Auto Claim</button>
+      <button class="sample-btn" onclick="loadSample('urgent')">Urgent Medical</button>
+      <button class="sample-btn" onclick="loadSample('fraud')">Suspected Fraud</button>
+      <button class="sample-btn" onclick="loadSample('property')">Property Damage</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="triage-btn" onclick="submitTriage()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Analyse Claim
+      </button>
+      <button class="btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div class="error-box" id="error-box"></div>
+
+  <div class="spinner-wrap" id="spinner">
+    <div class="spinner"></div>
+    Analysing claim with IBM Bob AI...
+  </div>
+
+  <div id="results">
+    <div class="card">
+      <div class="card-title">Triage Assessment</div>
+
+      <div class="result-header">
+        <div class="priority-badge" id="priority-badge">—</div>
+        <div class="escalate-badge" id="escalate-badge">—</div>
+      </div>
+
+      <div class="summary-text" id="summary-text"></div>
+
+      <div class="grid-2">
+        <div class="info-block">
+          <div class="info-block-label">Fraud Risk</div>
+          <div class="info-block-value" id="fraud-risk-val">—</div>
+        </div>
+        <div class="info-block">
+          <div class="info-block-label">Case Complexity</div>
+          <div class="info-block-value" id="complexity-val">—</div>
+        </div>
+        <div class="info-block">
+          <div class="info-block-label">Priority Reason</div>
+          <div class="info-block-value" id="priority-reason-val" style="font-weight:400; font-size:13px; color:var(--muted);">—</div>
+        </div>
+        <div class="info-block" id="escalation-reason-block" style="display:none;">
+          <div class="info-block-label">Escalation Reason</div>
+          <div class="info-block-value" id="escalation-reason-val" style="font-weight:400; font-size:13px; color:var(--critical);">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Fraud Indicators</div>
+      <ul class="fraud-list" id="fraud-list"></ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Recommended Actions</div>
+      <ul class="actions-list" id="actions-list"></ul>
+    </div>
+  </div>
+</main>
+
+<footer>Made with IBM Bob &nbsp;·&nbsp; Insurance Claims Triage Assistant</footer>
+
+<script>
+  const SAMPLES = {
+    routine: `Policy Number: AU-2024-089341
+Claim Type: Auto — Collision
+Date of Incident: 15 June 2025
+Claimant: Sarah Mitchell, age 34
+Location: Parking lot, Main Street Mall
+
+The claimant reports that while her vehicle (2021 Toyota Camry) was parked in the mall parking lot, another vehicle reversed into the rear bumper, causing cosmetic damage. The at-fault driver left their insurance details. Estimated repair cost: $1,200. Photos of the damage and a police incident report are attached. No injuries reported. This is the claimant's first claim in 5 years.`,
+
+    urgent: `Policy Number: HL-2024-554892
+Claim Type: Health — Emergency Hospitalisation
+Date of Incident: 18 June 2025
+Claimant: James Okafor, age 67
+Hospital: St. Vincent's Medical Centre
+
+Claimant was admitted via emergency for acute myocardial infarction (heart attack). Currently in ICU. Pre-authorisation requested urgently for cardiac catheterisation procedure. Estimated procedure cost: $45,000. Policy covers critical illness with a $50,000 limit. Patient has no history of cardiac claims. Family requesting urgent approval as surgery is scheduled for tomorrow morning.`,
+
+    fraud: `Policy Number: HO-2024-113287
+Claim Type: Home — Burglary / Theft
+Date of Incident: 10 June 2025
+Claimant: Kevin Larsen, age 41
+
+Claimant reports a break-in occurred while he was on holiday. Items claimed as stolen include: 3 laptops ($6,000), 2 watches (claimed at $12,000 each), jewellery ($8,000), and cash ($5,000). Total claim: $43,000. No police report filed as claimant says he "forgot." No signs of forced entry noted by responding officer. Neighbour states they saw the claimant at home on the date of the alleged burglary. This is the claimant's third theft claim in 18 months, previous two settled at $28,000 total.`,
+
+    property: `Policy Number: PR-2024-772034
+Claim Type: Commercial Property — Storm Damage
+Date of Incident: 12 June 2025
+Insured Business: Meridian Bakery, 45 Commerce Ave
+
+Severe hailstorm caused damage to the roof, three skylights, and an exterior HVAC unit. Water ingress damaged baking equipment and approximately 200kg of perishable stock. Business interruption began immediately. Contractor estimate for building repairs: $18,500. Equipment replacement: $9,200. Stock loss: $4,100. Total claim: $31,800. Meteorological data confirms severe storm in the area. Claimant has been with the insurer for 8 years, no prior claims.`
+  };
+
+  function loadSample(type) {
+    document.getElementById('claim-input').value = SAMPLES[type];
+  }
+
+  function clearAll() {
+    document.getElementById('claim-input').value = '';
+    document.getElementById('results').classList.remove('visible');
+    document.getElementById('error-box').classList.remove('visible');
+    document.getElementById('error-box').textContent = '';
+  }
+
+  async function submitTriage() {
+    const claim = document.getElementById('claim-input').value.trim();
+    if (!claim) {
+      showError('Please enter a claim summary before analysing.');
+      return;
+    }
+
+    const btn = document.getElementById('triage-btn');
+    const spinner = document.getElementById('spinner');
+    const results = document.getElementById('results');
+    const errorBox = document.getElementById('error-box');
+
+    btn.disabled = true;
+    spinner.classList.add('active');
+    results.classList.remove('visible');
+    errorBox.classList.remove('visible');
+
+    try {
+      const resp = await fetch('/api/triage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claim })
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok || data.error) {
+        showError('Error from AI: ' + (data.error || 'Unknown error') + (data.raw ? '\n\nRaw: ' + data.raw : ''));
+        return;
+      }
+
+      let parsed;
+      try {
+        // Strip potential markdown fences just in case
+        let raw = data.result.trim();
+        if (raw.startsWith('```')) {
+          raw = raw.replace(/^```[a-z]*\n?/, '').replace(/\n?```$/, '');
+        }
+        parsed = JSON.parse(raw);
+      } catch {
+        showError('AI returned an unexpected response format. Raw output:\n\n' + data.result);
+        return;
+      }
+
+      renderResults(parsed);
+
+    } catch (e) {
+      showError('Network error: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      spinner.classList.remove('active');
+    }
+  }
+
+  function renderResults(r) {
+    // Priority badge
+    const pb = document.getElementById('priority-badge');
+    pb.textContent = r.priority || '—';
+    pb.className = 'priority-badge badge-' + (r.priority || 'LOW');
+
+    // Escalation badge
+    const eb = document.getElementById('escalate-badge');
+    if (r.escalate) {
+      eb.textContent = 'ESCALATE';
+      eb.className = 'escalate-badge escalate-yes';
+    } else {
+      eb.textContent = 'No Escalation';
+      eb.className = 'escalate-badge escalate-no';
+    }
+
+    // Summary
+    document.getElementById('summary-text').textContent = r.summary || '';
+
+    // Fraud risk
+    const frv = document.getElementById('fraud-risk-val');
+    frv.textContent = r.fraud_risk || '—';
+    frv.className = 'info-block-value fraud-' + (r.fraud_risk || 'NONE');
+
+    // Complexity
+    const cv = document.getElementById('complexity-val');
+    cv.textContent = r.estimated_complexity || '—';
+    cv.className = 'info-block-value complexity-' + (r.estimated_complexity || 'SIMPLE');
+
+    // Priority reason
+    document.getElementById('priority-reason-val').textContent = r.priority_reason || '—';
+
+    // Escalation reason
+    const erb = document.getElementById('escalation-reason-block');
+    if (r.escalate && r.escalation_reason) {
+      erb.style.display = 'block';
+      document.getElementById('escalation-reason-val').textContent = r.escalation_reason;
+    } else {
+      erb.style.display = 'none';
+    }
+
+    // Fraud indicators
+    const fl = document.getElementById('fraud-list');
+    fl.innerHTML = '';
+    const indicators = r.fraud_indicators || [];
+    if (indicators.length === 0) {
+      fl.innerHTML = '<li><span class="no-fraud"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> No fraud indicators detected</span></li>';
+    } else {
+      indicators.forEach(ind => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="fraud-dot"></span><span>${ind}</span>`;
+        fl.appendChild(li);
+      });
+    }
+
+    // Actions
+    const al = document.getElementById('actions-list');
+    al.innerHTML = '';
+    const actions = r.recommended_actions || [];
+    actions.forEach((action, i) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="action-num">${i + 1}</span><span>${action}</span>`;
+      al.appendChild(li);
+    });
+
+    document.getElementById('results').classList.add('visible');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showError(msg) {
+    const eb = document.getElementById('error-box');
+    eb.textContent = msg;
+    eb.classList.add('visible');
+  }
+</script>
+</body>
+</html>
