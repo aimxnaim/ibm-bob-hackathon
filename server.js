@@ -19,7 +19,11 @@ if (!BOB_API_KEY) {
   console.error('ERROR: BOB_API_KEY environment variable is not set.');
   process.exit(1);
 }
-const BOB_API_URL = 'https://api.bob.ibm.com/v1/chat/completions';
+const BOB_API_URL = process.env.BOB_API_URL || 'https://api.bob.ibm.com/v1/chat/completions';
+const BOB_MODEL   = process.env.BOB_MODEL   || 'claude-sonnet-4-5';
+
+console.log(`Using Bob API: ${BOB_API_URL}`);
+console.log(`Using model:   ${BOB_MODEL}`);
 
 const server = http.createServer((req, res) => {
   // CORS headers
@@ -77,7 +81,7 @@ const server = http.createServer((req, res) => {
 Return ONLY valid JSON. No markdown, no code fences, no extra text.`;
 
       const requestBody = JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: BOB_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Claim Summary:\n${claimSummary}` }
