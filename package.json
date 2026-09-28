@@ -1,0 +1,12 @@
+{
+  "name": "claims-triage",
+  "version": "1.0.0",
+  "description": "Insurance Claims Triage Assistant powered by IBM Bob AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

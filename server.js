@@ -3,7 +3,22 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const BOB_API_KEY = 'bob_prod_bob-user_CoZiZESCEmYouboFmwREHcRGfY7hYzfxP8yU1eLcSksF2xW8BWNU1j35jNteGKLDymKxB341oEHu4m6orbjGeHz_23bqndfbNQDegViDpaREnUUPYFYLPrG36LcCpSPPCULd';
+// Load .env file if present
+try {
+  const envFile = fs.readFileSync(path.join(__dirname, '.env'), 'utf8');
+  for (const line of envFile.split('\n')) {
+    const [key, ...rest] = line.split('=');
+    if (key && rest.length && !process.env[key.trim()]) {
+      process.env[key.trim()] = rest.join('=').trim();
+    }
+  }
+} catch { /* no .env file — rely on real env vars */ }
+
+const BOB_API_KEY = process.env.BOB_API_KEY;
+if (!BOB_API_KEY) {
+  console.error('ERROR: BOB_API_KEY environment variable is not set.');
+  process.exit(1);
+}
 const BOB_API_URL = 'https://api.bob.ibm.com/v1/chat/completions';
 
 const server = http.createServer((req, res) => {
