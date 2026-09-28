@@ -271,6 +271,33 @@
     .escalate-yes { background: #fef2f2; color: #dc2626; }
     .escalate-no  { background: #f0fdf4; color: #16a34a; }
 
+    .risk-meter-wrap {
+      margin-bottom: 20px;
+    }
+    .risk-meter-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .risk-meter-track {
+      height: 10px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .risk-meter-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.8s cubic-bezier(.4,0,.2,1);
+      width: 0%;
+    }
+    .risk-fill-HIGH    { background: #dc2626; }
+    .risk-fill-MEDIUM  { background: #ea580c; }
+    .risk-fill-LOW     { background: #d97706; }
+    .risk-fill-NONE    { background: #16a34a; }
+
     .summary-text {
       font-size: 15px;
       color: var(--text);
@@ -477,6 +504,16 @@
 
       <div class="summary-text" id="summary-text"></div>
 
+      <div class="risk-meter-wrap">
+        <div class="risk-meter-label">
+          <span>Fraud Risk Score</span>
+          <span id="risk-meter-pct">—</span>
+        </div>
+        <div class="risk-meter-track">
+          <div class="risk-meter-fill" id="risk-meter-fill"></div>
+        </div>
+      </div>
+
       <div class="grid-2">
         <div class="info-block">
           <div class="info-block-label">Fraud Risk</div>
@@ -627,6 +664,14 @@ Severe hailstorm caused damage to the roof, three skylights, and an exterior HVA
 
     // Summary
     document.getElementById('summary-text').textContent = r.summary || '';
+
+    // Risk meter
+    const riskMap = { HIGH: 92, MEDIUM: 60, LOW: 28, NONE: 5 };
+    const riskPct = riskMap[r.fraud_risk] || 0;
+    const fill = document.getElementById('risk-meter-fill');
+    fill.className = 'risk-meter-fill risk-fill-' + (r.fraud_risk || 'NONE');
+    setTimeout(() => { fill.style.width = riskPct + '%'; }, 50);
+    document.getElementById('risk-meter-pct').textContent = riskPct + '% ' + (r.fraud_risk || 'NONE');
 
     // Fraud risk
     const frv = document.getElementById('fraud-risk-val');
